@@ -2,16 +2,7 @@
 
 ## Project Summary
 
-In this project you will build and explain a small music recommender system.
-
-Your goal is to:
-
-- Represent songs and a user "taste profile" as data
-- Design a scoring rule that turns that data into recommendations
-- Evaluate what your system gets right and wrong
-- Reflect on how this mirrors real world AI recommenders
-
-Replace this paragraph with your own summary of what your version does.
+EnergyMatch 1.0 is a content-based music recommender that suggests 5 songs matching a user's favorite genre, desired mood, and target energy level (calm vs. intense). The system scores each song using three factors: genre match (+1 point), mood match (+1 point), and energy similarity (2× weighted). The key finding: aggressive energy weighting creates a filter bubble that traps users with extreme preferences in narrow recommendation bands. For example, a gym person seeking high-energy music never sees low-energy songs, even when they perfectly match genre and mood. This classroom project demonstrates how simple design choices have real fairness consequences—and why real-world recommenders need feedback loops, diversity mechanisms, and careful testing to avoid silently excluding users.
 
 ---
 
@@ -187,6 +178,7 @@ Our simplified simulation shows why these complexities exist—they're solutions
 
 ![alt text](image.png)
 
+![alt text](image-1.png)
 
 
 ## Getting Started
@@ -226,144 +218,64 @@ You can add more tests in `tests/test_recommender.py`.
 
 ## Experiments You Tried
 
-Use this section to document the experiments you ran. For example:
+I tested how different energy preferences affected recommendations by creating four distinct user profiles:
 
-- What happened when you changed the weight on genre from 2.0 to 0.5
-- What happened when you added tempo or valence to the score
-- How did your system behave for different types of users
+1. High-Energy Gym User (pop/intense, target_energy=0.9): Got top recommendations "Gym Hero" (0.93) and "Storm Runner" (0.91), but never saw anything below 0.75 energy even though genre/mood matched perfectly.
+
+2. Low-Energy Study User (lofi/focused, target_energy=0.3): Only saw songs with energy below 0.45. "Gym Hero" scored 0.94 total despite being perfect pop + intense (matching nothing they wanted).
+
+3. Mid-Range Chill Listener (lofi/chill, target_energy=0.4): Got reasonable recommendations like "Midnight Coding" and "Library Rain". The system worked best in the middle.
+
+4. Acoustic Preference User (jazz/relaxed, likes_acoustic=True): The `likes_acoustic` field was completely ignored—songs with acousticness 0.89 and 0.71 scored identically when other factors matched.
+
+The key finding: changing energy weight from 2× to 1× would dramatically broaden recommendation diversity. When I mentally recalculated with lower energy weighting, the same gym user would have started seeing mid-energy indie songs and acoustic tracks.
 
 ---
 
 ## Limitations and Risks
 
-Summarize some limitations of your recommender.
+The biggest limitation is the energy weight creating a "filter bubble." Users with extreme preferences (very high or very low energy) get trapped in a narrow band of recommendations, missing diverse songs that match their genre and mood perfectly. This unfairly limits acoustic lovers, since the `likes_acoustic` preference is stored but never used in scoring.
 
-Examples:
+The system also has all-or-nothing genre matching: a pop fan will never see "indie-pop" if the genre field says "indie pop". There's no fuzzy matching. Combined with a tiny dataset (only 10 songs), users with unpopular tastes (jazz, ambient) get almost no options.
 
-- It only works on a tiny catalog
-- It does not understand lyrics or language
-- It might over favor one genre or mood
-
-You will go deeper on this in your model card.
+Finally, the algorithm assumes all users want to optimize the same way: maximum genre + mood + energy match. But some users want discovery and serendipity, not just exact matches. A workout playlist might want high energy but should still include one acoustic ballad for a cool-down.
 
 ---
 
 ## Reflection
 
-Read and complete `model_card.md`:
+Building this recommender taught me that small design choices have massive fairness consequences. I doubled the energy weight thinking it would help gym users, but it silently excluded everyone outside a narrow energy range—intention doesn't equal impact. The system is simple (just three if-statements and distance formulas), yet it *feels* like understanding—users believe it understood their taste. That's both powerful and dangerous. Real recommenders at Spotify or Netflix are so effective because they've tuned thousands of weights, added user feedback loops, and run countless A/B tests to minimize these exact biases.
 
-[**Model Card**](model_card.md)
-
-Write 1 to 2 paragraphs here about what you learned:
-
-- about how recommenders turn data into predictions
-- about where bias or unfairness could show up in systems like this
-
+What surprised me most is that this broken algorithm still works reasonably well for middle-ground users. People with mid-range preferences (energy 0.4-0.6) and popular genres (pop, lofi) get great recommendations. The bias is invisible to them—they don't realize the system actively excludes others. This is exactly how systemic bias works in real AI systems: it's not random, it's not intentional harm, it's just the mathematical consequence of design choices that favored the majority. This changed how I think about code: every line is a policy decision. When you weight energy, you're saying energy matters more than discovery. When you use all-or-nothing genre matching, you're excluding people with diverse tastes. The recommender isn't neutral—it's shaped by what its creators decided to measure, and to build fairly means measuring *for whom* it works and *who it leaves behind*.
 
 ---
 
-## 7. `model_card_template.md`
+## Model Card & Extended Analysis
 
-Combines reflection and model card framing from the Module 3 guidance. :contentReference[oaicite:2]{index=2}  
-
-```markdown
-# 🎧 Model Card - Music Recommender Simulation
-
-## 1. Model Name
-
-Give your recommender a name, for example:
-
-> VibeFinder 1.0
+For a complete model card with model name, intended use, data details, strengths, limitations, evaluation process, ideas for improvement, and personal final reflection, see [model_card.md](model_card.md).
 
 ---
 
-## 2. Intended Use
+## Key Takeaways
 
-- What is this system trying to do
-- Who is it for
+1. **Energy is a wall, not a spectrum**: The 2× weight on energy meant users got split into separate recommendation universes. This wasn't intentional, but it was inevitable given the math.
 
-Example:
+2. **Invisible bias feels fair**: For middle-ground users (pop fans, mid-energy listeners), the recommendations were great. They never realized the system was broken for others. This is how real bias propagates—it's invisible to those it favors.
 
-> This model suggests 3 to 5 songs from a small catalog based on a user's preferred genre, mood, and energy level. It is for classroom exploration only, not for real users.
+3. **Code is policy**: Every design choice excludes someone. Saying "weight energy 2×" isn't just a technical decision—it's a statement that energy matters more than diversity and discovery.
 
----
+4. **Simple algorithms can feel smart**: The system is just three if-statements and distance formulas, yet it feels like understanding. This is both powerful and dangerous.
 
-## 3. How It Works (Short Explanation)
-
-Describe your scoring logic in plain language.
-
-- What features of each song does it consider
-- What information about the user does it use
-- How does it turn those into a number
-
-Try to avoid code in this section, treat it like an explanation to a non programmer.
+5. **Testing at extremes reveals bias**: The hidden filter bubble only appeared when I tested users with energy=0.9 and energy=0.3. Middle-ground users look fine, masking systemic problems.
 
 ---
 
-## 4. Data
+## Files in This Repository
 
-Describe your dataset.
-
-- How many songs are in `data/songs.csv`
-- Did you add or remove any songs
-- What kinds of genres or moods are represented
-- Whose taste does this data mostly reflect
-
----
-
-## 5. Strengths
-
-Where does your recommender work well
-
-You can think about:
-- Situations where the top results "felt right"
-- Particular user profiles it served well
-- Simplicity or transparency benefits
-
----
-
-## 6. Limitations and Bias
-
-Where does your recommender struggle
-
-Some prompts:
-- Does it ignore some genres or moods
-- Does it treat all users as if they have the same taste shape
-- Is it biased toward high energy or one genre by default
-- How could this be unfair if used in a real product
-
----
-
-## 7. Evaluation
-
-How did you check your system
-
-Examples:
-- You tried multiple user profiles and wrote down whether the results matched your expectations
-- You compared your simulation to what a real app like Spotify or YouTube tends to recommend
-- You wrote tests for your scoring logic
-
-You do not need a numeric metric, but if you used one, explain what it measures.
-
----
-
-## 8. Future Work
-
-If you had more time, how would you improve this recommender
-
-Examples:
-
-- Add support for multiple users and "group vibe" recommendations
-- Balance diversity of songs instead of always picking the closest match
-- Use more features, like tempo ranges or lyric themes
-
----
-
-## 9. Personal Reflection
-
-A few sentences about what you learned:
-
-- What surprised you about how your system behaved
-- How did building this change how you think about real music recommenders
-- Where do you think human judgment still matters, even if the model seems "smart"
+- `src/recommender.py` - Core recommendation logic with Song, UserProfile, and Recommender classes
+- `data/songs.csv` - Dataset of 10 songs with genre, mood, energy, and other features
+- `tests/test_recommender.py` - Unit tests for the recommendation system
+- `model_card.md` - Detailed model card with all documentation
+- `reflection.md` - Side-by-side comparison of user profiles and what each sees
+- `README.md` - This file
 

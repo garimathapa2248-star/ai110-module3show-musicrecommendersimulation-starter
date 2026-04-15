@@ -23,6 +23,49 @@ def main() -> None:
     songs = load_songs("data/songs.csv")
     print(f"[OK] Loaded songs: {len(songs)}\n")
 
+    # ========== PHASE 4: TEST PROFILES ==========
+    
+    # STANDARD PROFILES
+    high_energy_pop = {
+        "favorite_genre": "pop",
+        "favorite_mood": "happy",
+        "target_energy": 0.9
+    }
+    
+    chill_lofi = {
+        "favorite_genre": "lofi",
+        "favorite_mood": "chill",
+        "target_energy": 0.35
+    }
+    
+    deep_intense_rock = {
+        "favorite_genre": "rock",
+        "favorite_mood": "intense",
+        "target_energy": 0.85
+    }
+    
+    # ADVERSARIAL/EDGE CASE PROFILES
+    # The Conflict: User wants high energy but a mood that doesn't exist in data
+    the_conflict = {
+        "favorite_genre": "pop",
+        "favorite_mood": "sad",  # Doesn't exist in data
+        "target_energy": 0.9
+    }
+    
+    # The Outlier: User wants a genre that doesn't exist in data
+    the_outlier = {
+        "favorite_genre": "trance",  # Doesn't exist in data
+        "favorite_mood": "happy",
+        "target_energy": 0.7
+    }
+    
+    # The Neutralist: User has mid-range energy and no specific preferences
+    the_neutralist = {
+        "favorite_genre": "",
+        "favorite_mood": "",
+        "target_energy": 0.5
+    }
+    
     # Step 2: Create user preference profile
     # Example user profile: "Chill Study" - lofi, calm mood, low energy
     user_prefs = {

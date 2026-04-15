@@ -224,20 +224,20 @@ def score_song(user_prefs: Dict, song: Dict) -> Dict:
     total_score = 0.0
     reasons = []
     
-    # Genre Match: +2.0 if matches
+    # Genre Match: +1.0 if matches (halved from +2.0)
     if song.get('genre', '').lower() == user_prefs.get('favorite_genre', '').lower():
-        total_score += 2.0
-        reasons.append('Matched favorite genre (+2.0)')
+        total_score += 1.0
+        reasons.append('Matched favorite genre (+1.0)')
     
     # Mood Match: +1.0 if matches
     if song.get('mood', '').lower() == user_prefs.get('favorite_mood', '').lower():
         total_score += 1.0
         reasons.append('Matched desired mood (+1.0)')
     
-    # Energy Score: 1 - abs(difference)
+    # Energy Score: 2 * (1 - abs(difference)) [doubled importance]
     target_energy = user_prefs.get('target_energy', 0.5)
     song_energy = song.get('energy', 0.5)
-    energy_score = 1.0 - abs(song_energy - target_energy)
+    energy_score = 2.0 * (1.0 - abs(song_energy - target_energy))
     total_score += energy_score
     reasons.append(f'Energy similarity ({energy_score:.2f})')
     
